@@ -4,7 +4,7 @@
 export const funds = [
   { ticker: 'FSKAX', desc: 'US total market',   color: '#378ADD', fee: 0.00015, rates: [ 0.020, 0.050, 0.085, 0.110, 0.135 ] },
   { ticker: 'FTIHX', desc: 'International',      color: '#1D9E75', fee: 0.00060, rates: [-0.010, 0.015, 0.040, 0.070, 0.100 ] },
-  { ticker: 'FXNAX', desc: 'US bonds',           color: '#EF9F27', fee: 0.00025, rates: [ 0.070, 0.050, 0.030, 0.010, -0.010 ] },
+  { ticker: 'FXNAX', desc: 'US bonds',           color: '#EF9F27', fee: 0.00025, rates: [ 0.070, 0.050, 0.010, -0.010, -0.020 ] },
   { ticker: 'FSRNX', desc: 'Real estate (REIT)', color: '#D85A30', fee: 0.00070, rates: [-0.010, 0.010, 0.030, 0.060, 0.090 ] },
 ]
 

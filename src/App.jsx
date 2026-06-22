@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
-import { computeProjection, fmt$, fmtK } from './calc.js'
+import { useState, useMemo, useEffect } from 'react'
+import { Theme, NumberInput } from '@carbon/react'
+import { computeProjection, fmtK } from './calc.js'
 import Metric from './components/Metric.jsx'
 import Slider from './components/Slider.jsx'
 import FundRow from './components/FundRow.jsx'
@@ -7,11 +8,30 @@ import GrowthChart from './components/GrowthChart.jsx'
 import TradeTable from './components/TradeTable.jsx'
 import WarnBox from './components/WarnBox.jsx'
 
+/** Follow the OS color-scheme preference, mapped to Carbon's themes. */
+function usePrefersDark() {
+  const [dark, setDark] = useState(
+    () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const onChange = (e) => setDark(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return dark
+}
+
+// Carbon NumberInput hands back the new value on its second arg.
+const numHandler = (setter) => (_evt, { value }) =>
+  setter(value === '' ? '' : Number(value))
+
 export default function App() {
-  const [balance, setBalance] = useState(28000)
-  const [contributors, setContributors] = useState(2)
+  const dark = usePrefersDark()
+  const [balance, setBalance] = useState(7000)
+  const [contributors, setContributors] = useState(1)
   const [perAccountInput, setPerAccountInput] = useState(7000)
-  const [risk, setRisk] = useState(5)
+  const [risk, setRisk] = useState(3)
   const [perf, setPerf] = useState(3)
 
   const r = useMemo(
@@ -31,82 +51,102 @@ export default function App() {
     (r.totalGains < 0 ? '-$' : '+$') + Math.abs(r.totalGains).toLocaleString()
 
   return (
-    <>
-      <h2>Portfolio allocation calculator</h2>
+    <Theme theme={dark ? 'g100' : 'white'} className="app">
+      <div className="app__inner">
+        <h2 className="app__title">Roth IRA Calculator</h2>
 
-      <div className="grid-2">
-        <Metric label="Total to invest" value={balance} onChange={setBalance}
-          inputProps={{ min: 100, step: 500 }} />
-        <Metric label="Risk level">{r.profile.label}</Metric>
-      </div>
+        <div className="grid-3" style={{ marginBottom: '1.5rem' }} >
+          <NumberInput id="balance" label="Total to invest" value={balance}
+            min={100} step={500} hideSteppers onChange={numHandler(setBalance)} />
+          <NumberInput id="contributors" label="Contributors (accounts)" value={contributors}
+            min={1} max={10} step={1} onChange={numHandler(setContributors)} />
+          <NumberInput id="limit" label="Annual limit / account" value={perAccountInput}
+            min={0} step={500} hideSteppers onChange={numHandler(setPerAccountInput)} />
+        </div>
 
-      <div className="grid-2">
-        <Metric label="Contributors (accounts)" value={contributors} onChange={setContributors}
-          inputProps={{ min: 1, max: 10, step: 1 }} />
-        <Metric label="Annual limit / account" value={perAccountInput} onChange={setPerAccountInput}
-          inputProps={{ min: 0, step: 500 }} />
-      </div>
+        <div className="grid-2">
+          <Metric label="Risk level">{r.profile.label}</Metric>
+          <Metric label="Total annual contribution">
+            ${r.annualContrib.toLocaleString()}/yr
+          </Metric>
+        </div>
 
-      <Metric label="Total annual contribution" style={{ marginBottom: '1.5rem' }}>
-        ${r.annualContrib.toLocaleString()}/yr
-      </Metric>
+        <div className="grid-2" style={{ marginBottom: '1.5rem' }} >
+          <Metric label="Blended return:">
+             {(r.blended * 100).toFixed(1)}%/yr
+          </Metric>
+          <Metric label="Performance">
+             {r.scenario.label}
+          </Metric>
+        </div>
+    
 
-      <Slider leftLabel="Conservative" rightLabel="Aggressive" value={risk} onChange={setRisk} />
-
-      <Slider leftLabel="Bear" rightLabel="Bull" value={perf} onChange={setPerf}
-        style={{ marginBottom: '0.5rem' }} />
-      <div className="perf-row">
-        <span className="slider-label">{r.scenario.label}</span>
-        <span className="blended-return">
-          Blended return: {(r.blended * 100).toFixed(1)}%/yr
-        </span>
-      </div>
-
-      <div>
-        {r.fundRows.map((fund) => (
-          <FundRow key={fund.ticker} fund={fund} />
-        ))}
-      </div>
-
-      <hr className="divider" />
-
-      <div className="grid-2" style={{ marginBottom: '1rem' }}>
-        <Metric label="Est. annual fees">
-          ${Math.round(r.finalFee).toLocaleString()}/yr (at yr 25)
-        </Metric>
-        <Metric label={`Proj. value at yr 25 (+${fmtK(r.annualContrib)}/yr)`}>
-          ${r.finalValue.toLocaleString()}
-        </Metric>
-      </div>
-
-      <GrowthChart
-        years={r.years}
-        portfolioData={r.portfolioData}
-        contribData={r.contribData}
-        gainsData={r.gainsData}
+        <div className="grid-2">
+        <Slider labelText={`Risk level`} value={risk} onChange={setRisk} formatLabel={val => {
+            if (val < 1) {
+              return 'Low';
+            } else if (val > 4) {
+              return 'High';
+            }
+            return 'Medium';
+          }}
       />
 
-      <div className="grid-3">
-        <Metric label="Total contributed">${r.totalContrib.toLocaleString()}</Metric>
-        <Metric label="Total gains">
-          <span style={{ color: gainsColor }}>{gainsText}</span>
-        </Metric>
-        <Metric label="Return on investment">
-          {(r.roi >= 0 ? '+' : '') + r.roi}%
-        </Metric>
+        <Slider labelText={`Market scenario`} value={perf} onChange={setPerf} formatLabel={val => {
+            if (val < 1) {
+              return 'Low';
+            } else if (val > 3) {
+              return 'High';
+            }
+            return 'Medium';
+          }} 
+        />
+        </div>
+
+        <div>
+          {r.fundRows.map((fund) => (
+            <FundRow key={fund.ticker} fund={fund} />
+          ))}
+        </div>
+
+        <div className="grid-2" style={{ marginTop: '1.5rem' }}>
+          <Metric label="Est. annual fees at yr 25">
+            ${Math.round(r.finalFee).toLocaleString()}/yr 
+          </Metric>
+          <Metric label={`Proj. value at yr 25 (+${fmtK(r.annualContrib)}/yr)`}>
+            ${r.finalValue.toLocaleString()}
+          </Metric>
+        </div>
+
+        <GrowthChart
+          years={r.years}
+          portfolioData={r.portfolioData}
+          contribData={r.contribData}
+          gainsData={r.gainsData}
+        />
+
+        <div className="grid-3">
+          <Metric label="Total contributed">${r.totalContrib.toLocaleString()}</Metric>
+          <Metric label="Total gains">
+            <span style={{ color: gainsColor }}>{gainsText}</span>
+          </Metric>
+          <Metric label="Return on investment">
+            {(r.roi >= 0 ? '+' : '') + r.roi}%
+          </Metric>
+        </div>
+
+        <div className="section-gap" />
+        <TradeTable perAccount={r.perAccount} rows={r.tradeRows} />
+
+        <WarnBox
+          annualContrib={r.annualContrib}
+          contributors={r.contributors}
+          perAccount={r.perAccount}
+          scenario={r.scenario}
+          annRates={r.annRates}
+        />
+
       </div>
-
-      <WarnBox
-        annualContrib={r.annualContrib}
-        contributors={r.contributors}
-        perAccount={r.perAccount}
-        scenario={r.scenario}
-        annRates={r.annRates}
-      />
-
-      <hr className="divider" style={{ marginTop: '1.5rem' }} />
-
-      <TradeTable perAccount={r.perAccount} rows={r.tradeRows} />
-    </>
+    </Theme>
   )
 }
