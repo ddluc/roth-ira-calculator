@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Allocation Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; max-width: 680px; margin: 2rem auto; padding: 0 1.5rem; background: #fff; color: #1a1a1a; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a1a; color: #e0e0e0; }
+      .metric { background: #2a2a2a !important; }
+      .fee-box { background: #2a2a2a !important; }
+      .warn-box { background: #3a2e00 !important; }
+      .warn-title { color: #f5c542 !important; }
+      .warn-body { color: #c9a227 !important; }
+      input[type="number"] { color: #e0e0e0 !important; }
+      .fund-bar-track { background: #2a2a2a !important; }
+      .divider { border-color: #333 !important; }
+    }
+    h2 { font-size: 20px; font-weight: 500; margin-bottom: 1.5rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .metric { background: #f5f5f3; border-radius: 8px; padding: 1rem; }
+    .metric-label { font-size: 13px; color: #888; margin-bottom: 4px; }
+    .metric-value { font-size: 20px; font-weight: 500; }
+    input[type="number"] { font-size: 20px; font-weight: 500; border: none; background: transparent; color: #1a1a1a; width: 100%; outline: none; padding: 0; }
+    input[type="range"] { width: 100%; accent-color: #378ADD; }
+    .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+    .slider-label { font-size: 12px; color: #888; white-space: nowrap; }
+    .fund-row { margin-bottom: 16px; }
+    .fund-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; gap: 4px; }
+    .fund-left { display: flex; align-items: baseline; gap: 8px; }
+    .fund-ticker { font-size: 13px; font-weight: 500; }
+    .fund-desc { font-size: 12px; color: #888; }
+    .fund-rate { font-size: 12px; font-weight: 500; }
+    .fund-right { display: flex; align-items: baseline; gap: 8px; }
+    .fund-pct { font-size: 12px; color: #888; min-width: 32px; text-align: right; }
+    .fund-amount { font-size: 14px; font-weight: 500; min-width: 64px; text-align: right; }
+    .fund-bar-track { background: #f0f0ee; border-radius: 5px; height: 8px; }
+    .fund-bar { height: 8px; border-radius: 5px; transition: width 0.3s ease; }
+    .divider { border: none; border-top: 0.5px solid #ddd; margin: 1rem 0; }
+    .fee-box { background: #f5f5f3; border-radius: 8px; padding: 12px 16px; margin-bottom: 1rem; }
+    .fee-row { display: flex; justify-content: space-between; font-size: 13px; color: #888; margin-bottom: 6px; }
+    .fee-row:last-child { margin-bottom: 0; }
+    .fee-val { font-weight: 500; color: #1a1a1a; }
+    .warn-box { background: #fffbe6; border-radius: 8px; padding: 12px 16px; }
+    .warn-title { font-size: 13px; color: #7a5c00; margin-bottom: 4px; font-weight: 500; }
+    .warn-body { font-size: 12px; color: #7a5c00; }
+  </style>
+</head>
+<body>
+
+  <h2>Portfolio allocation calculator</h2>
+
+  <div class="grid-2">
+    <div class="metric">
+      <div class="metric-label">Total to invest</div>
+      <input type="number" id="balance-input" value="28000" min="100" step="500">
+    </div>
+    <div class="metric">
+      <div class="metric-label">Risk level</div>
+      <div class="metric-value" id="risk-label">Aggressive</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="metric">
+      <div class="metric-label">Contributors (accounts)</div>
+      <input type="number" id="contributors-input" value="2" min="1" max="10" step="1">
+    </div>
+    <div class="metric">
+      <div class="metric-label">Annual limit / account</div>
+      <input type="number" id="limit-input" value="7000" min="0" step="500">
+    </div>
+  </div>
+
+  <div class="metric" style="margin-bottom: 1.5rem;">
+    <div class="metric-label">Total annual contribution</div>
+    <div class="metric-value" id="annual-contrib-label">$14,000/yr</div>
+  </div>
+
+  <div class="slider-row">
+    <span class="slider-label">Conservative</span>
+    <input type="range" min="1" max="5" step="1" value="5" id="risk-slider">
+    <span class="slider-label">Aggressive</span>
+  </div>
+
+  <div class="slider-row" style="margin-bottom: 0.5rem;">
+    <span class="slider-label">Bear</span>
+    <input type="range" min="1" max="5" step="1" value="3" id="perf-slider">
+    <span class="slider-label">Bull</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.5rem;">
+    <span class="slider-label" id="perf-label" style="color:#888;">Baseline</span>
+    <span style="font-size:13px;font-weight:500;" id="blended-return">Blended return: —</span>
+  </div>
+
+  <div id="fund-rows"></div>
+
+  <hr class="divider">
+
+  <div class="grid-2" style="margin-bottom: 1rem;">
+    <div class="metric">
+      <div class="metric-label">Est. annual fees</div>
+      <div class="metric-value" id="total-fees">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Proj. value at yr 25 (<span id="proj-contrib-label">+$14k/yr</span>)</div>
+      <div class="metric-value" id="proj-value">—</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap;">
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;"><span style="width:10px;height:10px;border-radius:2px;background:#378ADD;display:inline-block;"></span>Portfolio value</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;"><span style="width:10px;height:10px;border-radius:2px;background:#888780;display:inline-block;"></span>Total contributions</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block;"></span>Total gains</span>
+  </div>
+
+  <div style="position: relative; width: 100%; height: 280px; margin-bottom: 1rem;">
+    <canvas id="growthChart"></canvas>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:1rem;">
+    <div class="metric">
+      <div class="metric-label">Total contributed</div>
+      <div class="metric-value" id="total-contributed">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Total gains</div>
+      <div class="metric-value" id="total-gains" style="color:#1D9E75;">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Return on investment</div>
+      <div class="metric-value" id="roi">—</div>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <div class="warn-title">Past performance note</div>
+    <div class="warn-body" id="warn-body">Projection assumes $14,000/year in annual contributions plus compounding growth. Past performance does not guarantee future results.</div>
+  </div>
+
+  <hr class="divider" style="margin-top: 1.5rem;">
+
+  <div style="margin-bottom: 1rem;">
+    <div style="font-size: 13px; font-weight: 500; margin-bottom: 12px; color: #1a1a1a;" id="trade-title">Per $7,000 contribution — trade breakdown</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;" id="trade-table">
+      <thead>
+        <tr style="color: #888; text-align: left;">
+          <td style="padding: 4px 0; width: 25%;">Fund</td>
+          <td style="padding: 4px 8px; width: 35%;">Description</td>
+          <td style="padding: 4px 8px; text-align: right; width: 15%;">Alloc</td>
+          <td style="padding: 4px 0; text-align: right; width: 25%;">Amount</td>
+        </tr>
+      </thead>
+      <tbody id="trade-rows"></tbody>
+      <tfoot>
+        <tr style="border-top: 0.5px solid #ddd; font-weight: 500;">
+          <td colspan="2" style="padding: 8px 0 4px;">Total per contribution</td>
+          <td style="padding: 8px 8px 4px; text-align: right;">100%</td>
+          <td style="padding: 8px 0 4px; text-align: right;" id="trade-total">$7,000.00</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script>
+    // Each fund's annualized return is set explicitly for each performance
+    // scenario, in order: [Bear, Below avg, Baseline, Above avg, Bull].
+    // Stocks & REITs rise with the market; bonds move inversely as a hedge.
+    const funds = [
+      { ticker: 'FSKAX', desc: 'US total market',   color: '#378ADD', fee: 0.00015, rates: [ 0.020, 0.050, 0.085, 0.110, 0.135 ] },
+      { ticker: 'FTIHX', desc: 'International',      color: '#1D9E75', fee: 0.00060, rates: [-0.010, 0.015, 0.040, 0.070, 0.100 ] },
+      { ticker: 'FXNAX', desc: 'US bonds',           color: '#EF9F27', fee: 0.00025, rates: [ 0.070, 0.050, 0.030, 0.010, -0.010 ] },
+      { ticker: 'FSRNX', desc: 'Real estate (REIT)', color: '#D85A30', fee: 0.00070, rates: [-0.010, 0.010, 0.030, 0.060, 0.090 ] },
+    ];
+
+    const profiles = [
+      { label: 'Conservative',            allocs: [35, 15, 45,  5] },
+      { label: 'Moderately conservative', allocs: [45, 15, 35,  5] },
+      { label: 'Moderate',                allocs: [50, 20, 25,  5] },
+      { label: 'Moderately aggressive',   allocs: [55, 25, 15,  5] },
+      { label: 'Aggressive',              allocs: [60, 25, 10,  5] },
+    ];
+
+    function fmt$(n) { return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function fmtCents(n) { return n < 0.01 ? '<$0.01' : '$' + n.toFixed(2); }
+    function fmtK(n) { return '$' + (n >= 1000 ? Math.round(n / 1000) + 'k' : Math.round(n)); }
+
+    const years = Array.from({ length: 26 }, (_, i) => i);
+
+    // Performance scenarios — labels only; the actual rates live in each fund's
+    // `rates` array above, indexed by scenario position.
+    const perfScenarios = [
+      { label: 'Bear' },
+      { label: 'Below average' },
+      { label: 'Baseline' },
+      { label: 'Above average' },
+      { label: 'Bull' },
+    ];
+
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: years.map(y => 'Yr ' + y),
+        datasets: [
+          {
+            label: 'Portfolio value',
+            data: [],
+            borderColor: '#378ADD',
+            backgroundColor: 'rgba(55,138,221,0.08)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 2,
+            order: 3,
+          },
+          {
+            label: 'Total contributions',
+            data: [],
+            borderColor: '#888780',
+            backgroundColor: 'rgba(136,135,128,0.08)',
+            fill: true,
+            tension: 0,
+            pointRadius: 0,
+            borderWidth: 1.5,
+            borderDash: [4, 3],
+            order: 2,
+          },
+          {
+            label: 'Total gains',
+            data: [],
+            borderColor: '#1D9E75',
+            backgroundColor: 'rgba(29,158,117,0.10)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 1.5,
+            order: 1,
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ' ' + ctx.dataset.label + ': $' + Math.round(ctx.parsed.y).toLocaleString()
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(128,128,128,0.1)' },
+            ticks: {
+              color: '#888', font: { size: 11 },
+              autoSkip: false, maxRotation: 0,
+              callback: (val, i) => (i % 5 === 0 ? 'Yr ' + i : '')
+            }
+          },
+          y: {
+            grid: { color: 'rgba(128,128,128,0.1)' },
+            ticks: {
+              color: '#888', font: { size: 11 },
+              callback: v => fmtK(v)
+            }
+          }
+        }
+      }
+    });
+
+    function buildRows() {
+      const container = document.getElementById('fund-rows');
+      funds.forEach((f, i) => {
+        const div = document.createElement('div');
+        div.className = 'fund-row';
+        div.innerHTML = `
+          <div class="fund-header">
+            <div class="fund-left">
+              <span class="fund-ticker">${f.ticker}</span>
+              <span class="fund-desc">${f.desc}</span>
+              <span class="fund-rate" id="rate-${i}"></span>
+            </div>
+            <div class="fund-right">
+              <span class="fund-pct" id="pct-${i}">0%</span>
+              <span class="fund-amount" id="amt-${i}">$0</span>
+            </div>
+          </div>
+          <div class="fund-bar-track"><div class="fund-bar" id="bar-${i}" style="background:${f.color};width:0%;"></div></div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function update() {
+      const risk    = parseInt(document.getElementById('risk-slider').value);
+      const perf    = parseInt(document.getElementById('perf-slider').value);
+      const balance = parseFloat(document.getElementById('balance-input').value) || 0;
+      const p       = profiles[risk - 1];
+      const scen    = perfScenarios[perf - 1];
+      document.getElementById('risk-label').textContent = p.label;
+      document.getElementById('perf-label').textContent = scen.label;
+
+      // Contributors × per-account limit drive the annual contribution
+      const contributors = Math.max(1, parseInt(document.getElementById('contributors-input').value) || 1);
+      const perAccount   = Math.max(0, parseFloat(document.getElementById('limit-input').value) || 0);
+      const annualContrib = contributors * perAccount;
+
+      // Each fund's rate for the selected scenario comes straight from its map.
+      const annRates = funds.map(f => f.rates[perf - 1]);
+
+      // Allocation-weighted blended return, for display
+      const blended = p.allocs.reduce((s, a, i) => s + (a / 100) * annRates[i], 0);
+      document.getElementById('blended-return').textContent =
+        'Blended return: ' + (blended * 100).toFixed(1) + '%/yr';
+
+      // Header labels
+      document.getElementById('annual-contrib-label').textContent =
+        '$' + annualContrib.toLocaleString() + '/yr';
+      document.getElementById('proj-contrib-label').textContent =
+        '+' + fmtK(annualContrib) + '/yr';
+      document.getElementById('trade-title').textContent =
+        'Per ' + fmt$(perAccount).replace('.00', '') + ' contribution — trade breakdown';
+      document.getElementById('trade-total').textContent = fmt$(perAccount);
+
+      let totalFee = 0;
+      const fundAmts = funds.map((f, i) => balance * p.allocs[i] / 100);
+
+      funds.forEach((f, i) => {
+        const amt = fundAmts[i];
+        totalFee += amt * f.fee;
+        document.getElementById(`pct-${i}`).textContent = p.allocs[i] + '%';
+        document.getElementById(`amt-${i}`).textContent = fmt$(amt);
+        document.getElementById(`bar-${i}`).style.width = p.allocs[i] + '%';
+        const rateEl = document.getElementById(`rate-${i}`);
+        rateEl.textContent = (annRates[i] >= 0 ? '+' : '') + (annRates[i] * 100).toFixed(2) + '%/yr';
+        rateEl.style.color = annRates[i] < 0 ? '#D85A30' : '#1D9E75';
+      });
+
+      const contribAllocs = p.allocs.map(a => annualContrib * a / 100);
+
+      const portfolioData = years.map(yr => {
+        if (yr === 0) return Math.round(balance);
+        let total = 0;
+        funds.forEach((f, i) => {
+          const r = annRates[i];
+          total += fundAmts[i] * Math.pow(1 + r, yr);
+          for (let c = 1; c <= yr; c++) {
+            total += contribAllocs[i] * Math.pow(1 + r, yr - c);
+          }
+        });
+        return Math.round(total);
+      });
+
+      const contribData = years.map(yr => Math.round(balance + annualContrib * yr));
+      const gainsData   = years.map((_, i) => portfolioData[i] - contribData[i]);
+
+      const finalValue   = portfolioData[25];
+      const totalContrib = contribData[25];
+      const totalGains   = gainsData[25];
+      const roi          = totalContrib > 0 ? ((finalValue / totalContrib - 1) * 100).toFixed(0) : '0';
+
+      document.getElementById('proj-value').textContent        = '$' + finalValue.toLocaleString();
+      document.getElementById('total-contributed').textContent = '$' + totalContrib.toLocaleString();
+      document.getElementById('total-gains').textContent       = (totalGains < 0 ? '-$' : '+$') + Math.abs(totalGains).toLocaleString();
+      document.getElementById('total-gains').style.color       = totalGains < 0 ? '#D85A30' : '#1D9E75';
+      document.getElementById('roi').textContent               = (roi >= 0 ? '+' : '') + roi + '%';
+
+      // Update the projection caveat to reflect current inputs
+      document.getElementById('warn-body').textContent =
+        'Projection assumes $' + annualContrib.toLocaleString() + '/year in contributions (' +
+        contributors + ' account' + (contributors === 1 ? '' : 's') + ' × ' + fmt$(perAccount).replace('.00', '') +
+        ') compounding for 25 years. Each fund\u2019s return is set explicitly per scenario; the "' + scen.label +
+        '" case uses ' + funds.map((f, i) => f.ticker + ' ' + (annRates[i] >= 0 ? '+' : '') + (annRates[i] * 100).toFixed(1) + '%').join(', ') +
+        '. Bonds are modeled to move inversely to stocks as a flight-to-safety hedge. These are illustrative assumptions, not forecasts.';
+
+      const finalFee = funds.reduce((sum, f, i) => sum + (finalValue * p.allocs[i] / 100) * f.fee, 0);
+      document.getElementById('total-fees').textContent = '$' + Math.round(finalFee).toLocaleString() + '/yr (at yr 25)';
+
+      // Trade breakdown table
+      const tbody = document.getElementById('trade-rows');
+      tbody.innerHTML = '';
+      funds.forEach((f, i) => {
+        const pct = p.allocs[i];
+        const amt = (perAccount * pct / 100).toFixed(2);
+        const row = document.createElement('tr');
+        row.style.borderTop = '0.5px solid #eee';
+        row.innerHTML = `
+          <td style="padding: 6px 0; font-weight: 500;">${f.ticker}</td>
+          <td style="padding: 6px 8px; color: #888;">${f.desc}</td>
+          <td style="padding: 6px 8px; text-align: right;">${pct}%</td>
+          <td style="padding: 6px 0; text-align: right;">$${parseFloat(amt).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      chart.data.datasets[0].data = portfolioData;
+      chart.data.datasets[1].data = contribData;
+      chart.data.datasets[2].data = gainsData;
+      chart.update();
+    }
+
+    buildRows();
+    update();
+    ['risk-slider', 'perf-slider', 'balance-input', 'contributors-input', 'limit-input']
+      .forEach(id => document.getElementById(id).addEventListener('input', update));
+  </script>
+
+</body>
+</html>
