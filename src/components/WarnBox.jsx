@@ -1,22 +1,18 @@
 import { InlineNotification } from '@carbon/react'
-import { funds, PROJECTION_YEARS } from '../data.js'
+import { PROJECTION_YEARS } from '../data.js'
 import { fmt$ } from '../calc.js'
 
 /** Plain-language description of how the projection is modeled. Reflects the
  *  current inputs and the deterministic assumptions baked into calc.js. */
-export default function WarnBox({ annualContrib, contributors, perAccount, scenario, annRates }) {
-  const rateList = funds
-    .map((f, i) => `${f.ticker} ${annRates[i] >= 0 ? '+' : ''}${(annRates[i] * 100).toFixed(1)}%`)
-    .join(', ')
-
+export default function WarnBox({ annualContrib, contributors, perAccount, scenario }) {
   const lead =
     `Assumes $${annualContrib.toLocaleString()}/year in contributions ` +
     `(${contributors} account${contributors === 1 ? '' : 's'} × ${fmt$(perAccount).replace('.00', '')}) ` +
     `invested under the “${scenario.label}” scenario and compounded for ${PROJECTION_YEARS} years.`
 
   const assumptions = [
-    `Returns are fixed and deterministic based on performance level. Each fund earns a constant annual rate (${rateList}) every year.`,
-    `Your target allocation is applied to both the starting balance and every contribution, but the portfolio is never rebalanced — each fund compounds on its own, so the realized mix drifts over time.`,
+    `Returns are fixed based on the selected performance level. Under the “${scenario.label}” scenario, each fund earns the same annual rate every year.`,
+    `Your target allocation is applied to both the starting balance and every contribution, and the portfolio is rebalanced back to target every year — so the whole balance earns the blended return shown above, each year.`,
     `Contributions are added at the end of each year and held flat for all ${PROJECTION_YEARS} years (no step-ups for future IRS limit increases).`,
     `Growth is shown gross of fees. The listed expense ratios are estimated separately and are not subtracted from the projected balance.`,
     `All dollar figures are nominal — not adjusted for inflation.`,

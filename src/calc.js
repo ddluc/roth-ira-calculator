@@ -29,21 +29,19 @@ export function computeProjection({ balance, contributors, perAccount, risk, per
 
   // Per-fund dollar split of the current balance.
   const fundAmts = funds.map((f, i) => (balance * allocs[i]) / 100)
-  const contribAllocs = allocs.map((a) => (annualContrib * a) / 100)
 
-  // Year-by-year growth: lump-sum balance compounds, plus each year's
-  // contribution compounds for its remaining years.
+  // Year-by-year growth, assuming the portfolio is rebalanced back to its
+  // target allocation every year. Because the mix resets to target annually,
+  // every dollar earns the allocation-weighted blended rate each year — so the
+  // whole portfolio compounds at `blended`. The lump-sum balance compounds for
+  // all years; each end-of-year contribution compounds for its remaining years.
   const years = Array.from({ length: PROJECTION_YEARS + 1 }, (_, i) => i)
   const portfolioData = years.map((yr) => {
     if (yr === 0) return Math.round(balance)
-    let total = 0
-    funds.forEach((f, i) => {
-      const r = annRates[i]
-      total += fundAmts[i] * Math.pow(1 + r, yr)
-      for (let c = 1; c <= yr; c++) {
-        total += contribAllocs[i] * Math.pow(1 + r, yr - c)
-      }
-    })
+    let total = balance * Math.pow(1 + blended, yr)
+    for (let c = 1; c <= yr; c++) {
+      total += annualContrib * Math.pow(1 + blended, yr - c)
+    }
     return Math.round(total)
   })
 

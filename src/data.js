@@ -1,5 +1,5 @@
 // Each fund's annualized return is set explicitly for each performance scenario,
-// in order: [Bear, Below avg, Baseline, Above avg, Bull]. Stocks & REITs rise
+// in order: [Weak, Below avg, Baseline, Above avg, Strong]. Stocks & REITs rise
 // with the market; bonds move inversely as a flight-to-safety hedge.
 export const funds = [
   { ticker: 'FSKAX', desc: 'US total market',   color: '#378ADD', fee: 0.00015, rates: [ 0.020, 0.050, 0.085, 0.110, 0.135 ] },
@@ -19,11 +19,11 @@ export const profiles = [
 // Performance scenarios — labels only; the actual rates live in each fund's
 // `rates` array above, indexed by scenario position.
 export const perfScenarios = [
-  { label: 'Bear' },
+  { label: 'Weak' },
   { label: 'Below average' },
   { label: 'Baseline' },
   { label: 'Above average' },
-  { label: 'Bull' },
+  { label: 'Strong' },
 ]
 
 export const PROJECTION_YEARS = 25

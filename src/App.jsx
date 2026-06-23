@@ -114,7 +114,6 @@ export default function App() {
           contributors={r.contributors}
           perAccount={r.perAccount}
           scenario={r.scenario}
-          annRates={r.annRates}
         />
 
       </div>
