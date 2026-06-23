@@ -7,27 +7,15 @@ import FundRow from './components/FundRow.jsx'
 import GrowthChart from './components/GrowthChart.jsx'
 import TradeTable from './components/TradeTable.jsx'
 import WarnBox from './components/WarnBox.jsx'
+import { usePrefersDarkScheme } from './hooks.js'
 
-/** Follow the OS color-scheme preference, mapped to Carbon's themes. */
-function usePrefersDark() {
-  const [dark, setDark] = useState(
-    () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
-  )
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = (e) => setDark(e.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
-  return dark
-}
 
 // Carbon NumberInput hands back the new value on its second arg.
 const numHandler = (setter) => (_evt, { value }) =>
   setter(value === '' ? '' : Number(value))
 
 export default function App() {
-  const dark = usePrefersDark()
+  const dark = usePrefersDarkScheme()
   const [balance, setBalance] = useState(7000)
   const [contributors, setContributors] = useState(1)
   const [perAccountInput, setPerAccountInput] = useState(7000)
@@ -82,25 +70,8 @@ export default function App() {
     
 
         <div className="grid-2">
-        <Slider labelText={`Risk level`} value={risk} onChange={setRisk} formatLabel={val => {
-            if (val < 1) {
-              return 'Low';
-            } else if (val > 4) {
-              return 'High';
-            }
-            return 'Medium';
-          }}
-      />
-
-        <Slider labelText={`Market scenario`} value={perf} onChange={setPerf} formatLabel={val => {
-            if (val < 1) {
-              return 'Low';
-            } else if (val > 3) {
-              return 'High';
-            }
-            return 'Medium';
-          }} 
-        />
+          <Slider labelText="Risk level" value={risk} onChange={setRisk} />
+          <Slider labelText="Market performance" value={perf} onChange={setPerf} />
         </div>
 
         <div>

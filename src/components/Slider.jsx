@@ -1,8 +1,16 @@
 import { Slider as CarbonSlider } from '@carbon/react'
 
-/** A 1–5 Carbon slider. `labelText` carries the current selection's name so the
- *  user sees e.g. "Risk level — Aggressive" above the track. */
-export default function Slider({ labelText, value, onChange, style }) {
+/** A 1–5 Carbon slider whose end labels read qualitatively ("Low" … "High")
+ *  instead of the raw numbers. Carbon's `formatLabel` formats the min/max end
+ *  labels, so we map the extremes to words and leave the middle blank. */
+export default function Slider({
+  labelText,
+  value,
+  onChange,
+  style,
+  lowLabel = 'Low',
+  highLabel = 'High',
+}) {
   return (
     <div style={style}>
       <CarbonSlider
@@ -12,6 +20,7 @@ export default function Slider({ labelText, value, onChange, style }) {
         step={1}
         value={value}
         hideTextInput
+        formatLabel={(val) => (val <= 1 ? lowLabel : val >= 5 ? highLabel : String(val))}
         onChange={({ value }) => onChange(value)}
       />
     </div>
