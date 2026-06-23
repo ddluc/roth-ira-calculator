@@ -43,7 +43,7 @@ export default function App() {
       <div className="app__inner">
         <h2 className="app__title">Roth IRA Calculator</h2>
 
-        <div className="grid-3" style={{ marginBottom: '1.5rem' }} >
+        <div className="input-grid">
           <NumberInput id="balance" label="Total to invest" value={balance}
             min={100} step={500} hideSteppers onChange={numHandler(setBalance)} />
           <NumberInput id="contributors" label="Contributors (accounts)" value={contributors}
@@ -69,7 +69,7 @@ export default function App() {
         </div>
     
 
-        <div className="grid-2">
+        <div className="slider-grid">
           <Slider labelText="Risk level" value={risk} onChange={setRisk} />
           <Slider labelText="Market performance" value={perf} onChange={setPerf} />
         </div>

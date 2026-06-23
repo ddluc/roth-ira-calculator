@@ -12,7 +12,7 @@ export default function Slider({
   highLabel = 'High',
 }) {
   return (
-    <div style={style}>
+    <div className="slider-fill" style={style}>
       <CarbonSlider
         labelText={labelText}
         min={1}

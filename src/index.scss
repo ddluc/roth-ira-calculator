@@ -29,6 +29,44 @@
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
 
+// Text-input row: 3 across on wider screens. Under 450px the inputs get cut
+// off, so collapse to a 2-column grid with the first input spanning full width
+// (a 1-up row above a 2-up row).
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 650px) {
+  .input-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .input-grid > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+// Sliders sit side by side, but the track + end labels get cramped on narrower
+// screens, so stack them into one column under 650px.
+.slider-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 650px) {
+  .slider-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Carbon caps the slider track at max-width: 40rem, so it won't fill a wider
+// container. Lift that cap (and stretch the container) so the track spans the
+// full column width.
+.slider-fill .cds--slider-container { width: 100%; }
+.slider-fill .cds--slider { max-width: none; }
+
 // Read-only metric tile (Carbon Tile is the container; this styles the contents).
 .metric__label { color: var(--cds-text-secondary); margin-bottom: 0.25rem; font-size: 0.8125rem; }
 .metric__value { color: var(--cds-text-primary); font-size: 1.25rem; font-weight: 500; }
