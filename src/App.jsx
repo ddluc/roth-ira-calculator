@@ -44,7 +44,7 @@ export default function App() {
         <h2 className="app__title">Roth IRA Calculator</h2>
 
         <div className="input-grid">
-          <NumberInput id="balance" label="Total to invest" value={balance}
+          <NumberInput id="balance" label="Initial Balance" value={balance}
             min={100} step={500} hideSteppers onChange={numHandler(setBalance)} />
           <NumberInput id="contributors" label="Contributors (accounts)" value={contributors}
             min={1} max={10} step={1} onChange={numHandler(setContributors)} />
